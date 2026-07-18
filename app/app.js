@@ -352,22 +352,30 @@
         if (generation !== wallpaperGeneration || !WallpaperCore.isEnabled(localStorage)) return;
 
         const nextLayer = activeWallpaperLayer === 0 ? 1 : 0;
+        const previousLayer = activeWallpaperLayer;
         wallpaperLayers[nextLayer].style.backgroundImage = `url("${image.url.replace(/"/g, "%22")}")`;
-        requestAnimationFrame(() => {
-          if (generation !== wallpaperGeneration) return;
+        let activated = false;
+        const activate = () => {
+          if (
+            activated ||
+            generation !== wallpaperGeneration ||
+            !WallpaperCore.isEnabled(localStorage)
+          ) return;
+          activated = true;
           wallpaperLayers[nextLayer].classList.add("active");
-          if (activeWallpaperLayer >= 0) {
-            wallpaperLayers[activeWallpaperLayer].classList.remove("active");
+          if (previousLayer >= 0 && previousLayer !== nextLayer) {
+            wallpaperLayers[previousLayer].classList.remove("active");
           }
           activeWallpaperLayer = nextLayer;
-        });
-
-        activeWallpaper = image;
-        localStorage.setItem(
-          WALLPAPER_INDEX_KEY,
-          String(WallpaperCore.hourlyIndex(now, wallpaperPlaylist.length, offset))
-        );
-        showWallpaperAttribution(image);
+          activeWallpaper = image;
+          localStorage.setItem(
+            WALLPAPER_INDEX_KEY,
+            String(WallpaperCore.hourlyIndex(now, wallpaperPlaylist.length, offset))
+          );
+          showWallpaperAttribution(image);
+        };
+        requestAnimationFrame(activate);
+        setTimeout(activate, 250);
         return;
       } catch (error) {
         console.warn("Skipping unavailable wallpaper:", error);
