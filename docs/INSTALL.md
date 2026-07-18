@@ -28,17 +28,8 @@ installer. Alternatively, run the following on a macOS or Linux computer
 after replacing the example IP address:
 
 ```sh
-TV_IP=192.168.1.100
-RELEASE_URL="$(curl -fsSL -o /dev/null -w '%{url_effective}' \
-  https://github.com/nenad/webos-25-menu/releases/latest)"
-VERSION="${RELEASE_URL##*/v}"
-curl -fL \
-  "https://github.com/nenad/webos-25-menu/releases/download/v${VERSION}/io.github.nenad.webos25menu_${VERSION}_all.ipk" \
-  -o /tmp/webos25menu.ipk
-scp /tmp/webos25menu.ipk root@"$TV_IP":/tmp/webos25menu.ipk
-ssh -tt root@"$TV_IP" "timeout 60 luna-send -w 60000 -i luna://com.webos.appInstallService/dev/install '{\"id\":\"com.ares.defaultName\",\"ipkUrl\":\"/tmp/webos25menu.ipk\",\"subscribe\":true}'"
-rm -f /tmp/webos25menu.ipk
-ssh root@"$TV_IP" 'rm -f /tmp/webos25menu.ipk'
+curl -fsSL https://raw.githubusercontent.com/nenad/webos-25-menu/main/install.sh |
+  bash -s -- 192.168.1.100
 ```
 
 Open **webOS 25 Menu**, select the gear button, and choose **Enable**.
@@ -74,15 +65,8 @@ Home button integration starts the remote mapper at boot. To also open the
 menu automatically 15 seconds after webOS starts, run:
 
 ```sh
-TV_IP=192.168.1.100
-ssh root@"$TV_IP" 'sh -s' <<'EOF'
-cat > /var/lib/webosbrew/init.d/webos25menu-autostart <<'SCRIPT'
-#!/bin/sh
-nohup sh -c "sleep 15; /usr/bin/luna-send -n 1 -f luna://com.webos.applicationManager/launch '{\"id\":\"io.github.nenad.webos25menu\"}'" \
-  >/tmp/webos25menu-autostart.log 2>&1 </dev/null &
-SCRIPT
-chmod 0755 /var/lib/webosbrew/init.d/webos25menu-autostart
-EOF
+curl -fsSL https://raw.githubusercontent.com/nenad/webos-25-menu/main/install.sh |
+  bash -s -- 192.168.1.100 --autostart
 ```
 
 This uses only the Homebrew startup directory. Remove the startup hook with:

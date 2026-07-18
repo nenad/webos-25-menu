@@ -3,6 +3,7 @@
 PYTHON ?= python3
 
 check:
+	bash -n install.sh
 	node --check app/app.js
 	node --check app/wallpaper.js
 	node --test tests/test_wallpaper.js
@@ -11,6 +12,7 @@ check:
 	sh -n app/root/start_mapper.sh
 	$(PYTHON) -m unittest discover -s tests -p 'test_*.py'
 	sh tests/test_installer.sh
+	sh tests/test_public_installer.sh
 
 package: check
 	$(PYTHON) tools/generate_icon.py
