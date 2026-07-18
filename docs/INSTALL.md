@@ -25,13 +25,16 @@ dist/io.github.nenad.webos25menu_<version>_all.ipk
 
 Install the IPK with webOS Dev Manager or another Homebrew-compatible package
 installer. Alternatively, run the following on a macOS or Linux computer
-with the GitHub CLI installed. Run `gh auth login` first if the repository is
-private, then replace the example IP address:
+after replacing the example IP address:
 
 ```sh
 TV_IP=192.168.1.100
-gh release download --repo nenad/webos-25-menu --pattern '*_all.ipk' \
-  --output /tmp/webos25menu.ipk --clobber
+RELEASE_URL="$(curl -fsSL -o /dev/null -w '%{url_effective}' \
+  https://github.com/nenad/webos-25-menu/releases/latest)"
+VERSION="${RELEASE_URL##*/v}"
+curl -fL \
+  "https://github.com/nenad/webos-25-menu/releases/download/v${VERSION}/io.github.nenad.webos25menu_${VERSION}_all.ipk" \
+  -o /tmp/webos25menu.ipk
 scp /tmp/webos25menu.ipk root@"$TV_IP":/tmp/webos25menu.ipk
 ssh -tt root@"$TV_IP" "timeout 60 luna-send -w 60000 -i luna://com.webos.appInstallService/dev/install '{\"id\":\"com.ares.defaultName\",\"ipkUrl\":\"/tmp/webos25menu.ipk\",\"subscribe\":true}'"
 rm -f /tmp/webos25menu.ipk

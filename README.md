@@ -33,14 +33,17 @@ tvservice, or `/usr`.
 
 Download `io.github.nenad.webos25menu_<version>_all.ipk` from the latest
 GitHub release and install it with webOS Dev Manager, or copy and run the
-following commands on a macOS or Linux computer with the GitHub CLI
-installed. If the repository is private, authenticate first with
-`gh auth login`. Replace the IP address with your TV's address:
+following commands on a macOS or Linux computer. Replace the IP address with
+your TV's address:
 
 ```sh
 TV_IP=192.168.1.100
-gh release download --repo nenad/webos-25-menu --pattern '*_all.ipk' \
-  --output /tmp/webos25menu.ipk --clobber
+RELEASE_URL="$(curl -fsSL -o /dev/null -w '%{url_effective}' \
+  https://github.com/nenad/webos-25-menu/releases/latest)"
+VERSION="${RELEASE_URL##*/v}"
+curl -fL \
+  "https://github.com/nenad/webos-25-menu/releases/download/v${VERSION}/io.github.nenad.webos25menu_${VERSION}_all.ipk" \
+  -o /tmp/webos25menu.ipk
 scp /tmp/webos25menu.ipk root@"$TV_IP":/tmp/webos25menu.ipk
 ssh -tt root@"$TV_IP" "timeout 60 luna-send -w 60000 -i luna://com.webos.appInstallService/dev/install '{\"id\":\"com.ares.defaultName\",\"ipkUrl\":\"/tmp/webos25menu.ipk\",\"subscribe\":true}'"
 rm -f /tmp/webos25menu.ipk
