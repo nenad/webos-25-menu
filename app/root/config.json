@@ -1,0 +1,10 @@
+{
+  "customHomeAppId": "io.github.nenad.webos25menu",
+  "stockHomeAppId": "com.webos.app.home",
+  "sourceDeviceName": "LGE M-RCU - Builtin [0]",
+  "outputDeviceName": "LGE M-RCU - Builtin [2]",
+  "homeKeyCode": 773,
+  "backKeyCode": 412,
+  "longPressSeconds": 1.0,
+  "returnHomeDelaySeconds": 0.8
+}

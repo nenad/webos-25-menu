@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>webOS 25 Menu</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="home">
+    <section id="status" class="status" aria-label="Time and weather">
+      <time id="clock">--:--</time>
+      <span id="weatherDivider" class="divider" hidden></span>
+      <span id="weatherIcon" class="weather-icon" hidden></span>
+      <span id="temperature" hidden></span>
+      <span id="location" hidden></span>
+    </section>
+
+    <section class="launcher" aria-label="Applications">
+      <div id="apps" class="apps"></div>
+      <div id="message" class="message" role="status" hidden></div>
+    </section>
+
+    <button id="settingsButton" class="settings-button" type="button" aria-label="Settings">
+      <span aria-hidden="true">&#9881;</span>
+    </button>
+
+    <section id="settingsPanel" class="settings-panel" aria-label="webOS 25 Menu settings" hidden>
+      <div class="settings-card">
+        <header>
+          <div>
+            <p class="eyebrow">webOS 25 Menu</p>
+            <h1>Settings</h1>
+          </div>
+          <button id="closeSettings" class="secondary focusable" type="button">Close</button>
+        </header>
+
+        <div class="setting-group">
+          <h2>Home button integration</h2>
+          <p id="mapperStatus">Checking compatibility…</p>
+          <div class="actions">
+            <button id="enableMapper" class="primary focusable" type="button">Enable</button>
+            <button id="forceMapper" class="danger focusable" type="button" hidden>
+              Disable conflicting mapper and enable
+            </button>
+            <button id="disableMapper" class="secondary focusable" type="button">Disable</button>
+            <button id="refreshStatus" class="secondary focusable" type="button">Refresh</button>
+          </div>
+          <p class="hint">Short Home opens this menu. Long Home opens LG Home. Long Back closes other apps and returns here.</p>
+        </div>
+
+        <div class="setting-group">
+          <h2>Weather</h2>
+          <label for="weatherCity">Fallback city</label>
+          <input id="weatherCity" class="focusable" type="text" autocomplete="off" placeholder="Use the TV location">
+          <div class="actions">
+            <button id="saveWeather" class="primary focusable" type="button">Save weather</button>
+            <button id="clearWeather" class="secondary focusable" type="button">Use TV location</button>
+          </div>
+        </div>
+
+        <p class="safety">The installer writes only to Homebrew and root-user data directories. It never remounts or modifies kernel, rootfs, tvservice, or /usr.</p>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

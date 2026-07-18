@@ -1,0 +1,21 @@
+{
+  "id": "io.github.nenad.webos25menu",
+  "version": "1.0.3",
+  "vendor": "Nenad",
+  "type": "web",
+  "main": "index.html",
+  "title": "webOS 25 Menu",
+  "icon": "assets/icon.png",
+  "largeIcon": "assets/icon.png",
+  "iconColor": "#111827",
+  "resolution": "1920x1080",
+  "visible": true,
+  "handlesRelaunch": false,
+  "requiredPermissions": [
+    "applications",
+    "applications.launcher",
+    "applications.internal",
+    "hlp.internal",
+    "settings"
+  ]
+}
