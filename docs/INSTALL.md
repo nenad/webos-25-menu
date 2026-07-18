@@ -47,9 +47,11 @@ The button behavior is:
 
 The app row mirrors the visible launch points and ordering from stock LG Home.
 Long-press Home and manage the row in LG Home; the custom menu reads those
-changes the next time it opens. In the weather city field, press Enter to
-start editing; merely highlighting the field does not open the keyboard.
-Press Enter again to close the keyboard and move focus to **Save weather**.
+changes the next time it opens. Use **Hide Apps shortcut** to remove LG's Apps
+shortcut from this custom menu without changing stock Home. In the weather
+city field, press Enter to start editing; merely highlighting the field does
+not open the keyboard. Press Enter again to close the keyboard and move focus
+to **Save weather**.
 
 Hourly Wikimedia Commons wallpapers are enabled by default. They use 1920px
 landscape thumbnails, rotate once per hour with a crossfade, and refresh

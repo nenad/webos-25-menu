@@ -4,6 +4,8 @@
   const APP_ID = "io.github.nenad.webos25menu";
   const ROOT_SCRIPT =
     "/media/developer/apps/usr/palm/applications/io.github.nenad.webos25menu/root/install.sh";
+  const APPS_SHORTCUT_ID = "com.webos.app.discovery";
+  const HIDE_APPS_SHORTCUT_KEY = "hideAppsShortcut";
   const WALLPAPER_CACHE_KEY = "commonsWallpaperCacheV1";
   const WALLPAPER_INDEX_KEY = "commonsWallpaperIndex";
   const COMMONS_API_URL =
@@ -42,6 +44,7 @@
   const wallpaperToggle = document.getElementById("wallpaperToggle");
   const wallpaperDetails = document.getElementById("wallpaperDetails");
   const openWallpaperSource = document.getElementById("openWallpaperSource");
+  const appsShortcutToggle = document.getElementById("appsShortcutToggle");
 
   let messageTimer;
   let wallpaperPlaylist = [];
@@ -132,14 +135,32 @@
     if (first && settingsPanel.hidden) requestAnimationFrame(() => first.focus());
   }
 
+  function isAppsShortcutHidden() {
+    return localStorage.getItem(HIDE_APPS_SHORTCUT_KEY) === "true";
+  }
+
+  function updateAppsShortcutToggle() {
+    const hidden = isAppsShortcutHidden();
+    appsShortcutToggle.textContent = `Hide Apps shortcut: ${hidden ? "On" : "Off"}`;
+    appsShortcutToggle.setAttribute("aria-pressed", String(hidden));
+  }
+
+  function visibleLaunchPoints(launchPoints) {
+    return launchPoints.filter(app =>
+      app.id !== APP_ID &&
+      (!isAppsShortcutHidden() || app.id !== APPS_SHORTCUT_ID)
+    );
+  }
+
   async function loadLaunchPoints() {
     try {
       const response = await runInstaller("list-apps");
-      const launchPoints = (response.launchPoints || []).filter(app => app.id !== APP_ID);
-      renderApps(launchPoints.length ? launchPoints : FALLBACK_LAUNCH_POINTS);
+      const launchPoints = visibleLaunchPoints(response.launchPoints || []);
+      const fallback = isAppsShortcutHidden() ? [] : FALLBACK_LAUNCH_POINTS;
+      renderApps(launchPoints.length ? launchPoints : fallback);
     } catch (error) {
       console.warn("Stock Home launch points unavailable:", error);
-      renderApps(FALLBACK_LAUNCH_POINTS);
+      renderApps(isAppsShortcutHidden() ? [] : FALLBACK_LAUNCH_POINTS);
     }
   }
 
@@ -465,6 +486,7 @@
     settingsPanel.hidden = false;
     weatherCity.readOnly = true;
     weatherCity.value = localStorage.getItem("weatherCity") || "";
+    updateAppsShortcutToggle();
     refreshMapperStatus();
     requestAnimationFrame(() => document.getElementById("closeSettings").focus());
   }
@@ -542,6 +564,14 @@
   document.getElementById("enableMapper").addEventListener("click", () => changeMapper("install"));
   forceMapper.addEventListener("click", () => changeMapper("install-force"));
   document.getElementById("disableMapper").addEventListener("click", () => changeMapper("uninstall"));
+
+  appsShortcutToggle.addEventListener("click", () => {
+    const hidden = !isAppsShortcutHidden();
+    localStorage.setItem(HIDE_APPS_SHORTCUT_KEY, String(hidden));
+    updateAppsShortcutToggle();
+    loadLaunchPoints();
+    showMessage(`Apps shortcut ${hidden ? "hidden" : "shown"}`);
+  });
 
   wallpaperToggle.addEventListener("click", () => {
     const enabled = !WallpaperCore.isEnabled(localStorage);

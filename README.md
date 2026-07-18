@@ -97,7 +97,9 @@ The app row mirrors the applications shown by the original LG Home menu,
 including their order. webOS 25 Menu deliberately does not maintain a second
 visibility configuration. To add, remove, hide, or reorder apps, long-press
 Home to open LG Home and make the change there. The custom menu picks up the
-updated LG Home row the next time it opens.
+updated LG Home row the next time it opens. The one exception is the
+**Hide Apps shortcut** toggle, which removes LG's Apps shortcut only from this
+custom menu.
 
 ### Wallpapers
 
