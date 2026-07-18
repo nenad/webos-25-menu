@@ -24,8 +24,21 @@ dist/io.github.nenad.webos25menu_<version>_all.ipk
 ## Install
 
 Install the IPK with webOS Dev Manager or another Homebrew-compatible package
-installer. Open **webOS 25 Menu**, select the gear button, and choose
-**Enable**.
+installer. Alternatively, run the following on a macOS or Linux computer
+with the GitHub CLI installed. Run `gh auth login` first if the repository is
+private, then replace the example IP address:
+
+```sh
+TV_IP=192.168.1.100
+gh release download --repo nenad/webos-25-menu --pattern '*_all.ipk' \
+  --output /tmp/webos25menu.ipk --clobber
+scp /tmp/webos25menu.ipk root@"$TV_IP":/tmp/webos25menu.ipk
+ssh -tt root@"$TV_IP" "timeout 60 luna-send -w 60000 -i luna://com.webos.appInstallService/dev/install '{\"id\":\"com.ares.defaultName\",\"ipkUrl\":\"/tmp/webos25menu.ipk\",\"subscribe\":true}'"
+rm -f /tmp/webos25menu.ipk
+ssh root@"$TV_IP" 'rm -f /tmp/webos25menu.ipk'
+```
+
+Open **webOS 25 Menu**, select the gear button, and choose **Enable**.
 
 If LG Input Hook or an older Magic Mapper startup hook is enabled, setup stops
 without changing it. Review the warning and choose **Disable conflicting
@@ -51,6 +64,30 @@ button are available in Settings. Select **Hourly Wikimedia wallpapers** to
 disable network wallpaper loading and use the built-in neutral background.
 If Commons is offline, a cached playlist is used when available; otherwise
 the neutral background remains visible.
+
+## Open automatically after startup
+
+Home button integration starts the remote mapper at boot. To also open the
+menu automatically 15 seconds after webOS starts, run:
+
+```sh
+TV_IP=192.168.1.100
+ssh root@"$TV_IP" 'sh -s' <<'EOF'
+cat > /var/lib/webosbrew/init.d/webos25menu-autostart <<'SCRIPT'
+#!/bin/sh
+nohup sh -c "sleep 15; /usr/bin/luna-send -n 1 -f luna://com.webos.applicationManager/launch '{\"id\":\"io.github.nenad.webos25menu\"}'" \
+  >/tmp/webos25menu-autostart.log 2>&1 </dev/null &
+SCRIPT
+chmod 0755 /var/lib/webosbrew/init.d/webos25menu-autostart
+EOF
+```
+
+This uses only the Homebrew startup directory. Remove the startup hook with:
+
+```sh
+TV_IP=192.168.1.100
+ssh root@"$TV_IP" 'rm -f /var/lib/webosbrew/init.d/webos25menu-autostart'
+```
 
 ## Disable or uninstall
 

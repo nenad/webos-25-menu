@@ -29,13 +29,25 @@ tvservice, or `/usr`.
 
 ## Installation
 
-### Download a release
+### Install the latest release
 
 Download `io.github.nenad.webos25menu_<version>_all.ipk` from the latest
-release or CI artifact.
+GitHub release and install it with webOS Dev Manager, or copy and run the
+following commands on a macOS or Linux computer with the GitHub CLI
+installed. If the repository is private, authenticate first with
+`gh auth login`. Replace the IP address with your TV's address:
 
-Install the IPK with webOS Dev Manager or another Homebrew-compatible package
-installer, then:
+```sh
+TV_IP=192.168.1.100
+gh release download --repo nenad/webos-25-menu --pattern '*_all.ipk' \
+  --output /tmp/webos25menu.ipk --clobber
+scp /tmp/webos25menu.ipk root@"$TV_IP":/tmp/webos25menu.ipk
+ssh -tt root@"$TV_IP" "timeout 60 luna-send -w 60000 -i luna://com.webos.appInstallService/dev/install '{\"id\":\"com.ares.defaultName\",\"ipkUrl\":\"/tmp/webos25menu.ipk\",\"subscribe\":true}'"
+rm -f /tmp/webos25menu.ipk
+ssh root@"$TV_IP" 'rm -f /tmp/webos25menu.ipk'
+```
+
+Then:
 
 1. Open **webOS 25 Menu** from the TV's application list.
 2. Select the gear button in the bottom-right corner.
@@ -49,6 +61,33 @@ The remote is configured as follows:
 - Long Home: open the original LG Home
 - Back inside webOS 25 Menu: ignored
 - Long Back in another app: close it and return to webOS 25 Menu
+
+### Open automatically after TV startup
+
+Enabling **Home button integration** makes the remote mapper start
+automatically, but it does not open the menu until Home is pressed. To also
+open webOS 25 Menu shortly after every TV startup, run this from your computer:
+
+```sh
+TV_IP=192.168.1.100
+ssh root@"$TV_IP" 'sh -s' <<'EOF'
+cat > /var/lib/webosbrew/init.d/webos25menu-autostart <<'SCRIPT'
+#!/bin/sh
+nohup sh -c "sleep 15; /usr/bin/luna-send -n 1 -f luna://com.webos.applicationManager/launch '{\"id\":\"io.github.nenad.webos25menu\"}'" \
+  >/tmp/webos25menu-autostart.log 2>&1 </dev/null &
+SCRIPT
+chmod 0755 /var/lib/webosbrew/init.d/webos25menu-autostart
+EOF
+```
+
+The 15-second delay lets webOS finish starting. The script lives only in the
+Homebrew startup directory and does not modify a read-only system partition.
+To disable automatic opening:
+
+```sh
+TV_IP=192.168.1.100
+ssh root@"$TV_IP" 'rm -f /var/lib/webosbrew/init.d/webos25menu-autostart'
+```
 
 The app row mirrors the applications shown by the original LG Home menu,
 including their order. webOS 25 Menu deliberately does not maintain a second
