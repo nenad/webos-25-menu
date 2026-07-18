@@ -49,18 +49,32 @@ case "$*" in
     cat >/dev/null
     ;;
   *"TV connection established"*)
+    case " $* " in
+      *" -n "*) ;;
+      *) cat >/dev/null ;;
+    esac
     printf '%s\n' 'TV connection established.'
+    ;;
+  *)
+    case " $* " in
+      *" -n "*) ;;
+      *) cat >/dev/null ;;
+    esac
     ;;
 esac
 EOF
 
 chmod 0755 "$TEMP_DIR/bin/curl" "$TEMP_DIR/bin/scp" "$TEMP_DIR/bin/ssh"
-PATH="$TEMP_DIR/bin:$PATH" bash "$PROJECT_ROOT/install.sh" tv.local --autostart \
-  >"$TEMP_DIR/output.log"
+PATH="$TEMP_DIR/bin:$PATH"
+export PATH
+cat "$PROJECT_ROOT/install.sh" |
+  bash -s -- tv.local --autostart >"$TEMP_DIR/output.log"
 
 grep -Fq 'scp -O' "$LOG"
 grep -Fq 'root@tv.local:/tmp/webos25menu.ipk' "$LOG"
 grep -Fq 'appInstallService/dev/install' "$LOG"
+grep -Fq 'ssh -n root@tv.local' "$LOG"
+grep -Fq 'ssh -n -tt root@tv.local' "$LOG"
 grep -Fq 'SSH command closed with status 255' "$TEMP_DIR/output.log"
 grep -Fq 'Installation complete.' "$TEMP_DIR/output.log"
 grep -Fq 'future TV startups' "$TEMP_DIR/output.log"

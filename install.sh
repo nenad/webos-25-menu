@@ -70,7 +70,7 @@ cleanup() {
   rm -rf "$TEMP_DIR"
   if [[ "$UPLOADED" == true ]]; then
     log "Removing temporary package from the TV..."
-    ssh "$TARGET" "rm -f '$REMOTE_IPK'" >/dev/null 2>&1 || true
+    ssh -n "$TARGET" "rm -f '$REMOTE_IPK'" >/dev/null 2>&1 || true
   fi
   if [[ "$status" -ne 0 ]]; then
     log "Installation stopped with exit code $status." >&2
@@ -80,7 +80,7 @@ cleanup() {
 trap cleanup EXIT
 
 log "Checking SSH access to $TARGET..."
-ssh "$TARGET" 'printf "TV connection established.\\n"'
+ssh -n "$TARGET" 'printf "TV connection established.\\n"'
 
 log "Finding the latest GitHub release..."
 RELEASE_URL=$(curl -fsSL -o /dev/null -w '%{url_effective}' \
@@ -107,7 +107,7 @@ log "Upload complete."
 log "Starting webOS package installation (this can take up to a minute)..."
 INSTALL_LOG="$TEMP_DIR/install.log"
 set +e
-ssh -tt "$TARGET" \
+ssh -n -tt "$TARGET" \
   "timeout 75 luna-send -w 60000 -i luna://com.webos.appInstallService/dev/install '{\"id\":\"com.ares.defaultName\",\"ipkUrl\":\"$REMOTE_IPK\",\"subscribe\":true}'" \
   2>&1 | tr -d '\r' | tee "$INSTALL_LOG"
 PIPE_STATUSES=("${PIPESTATUS[@]}")
@@ -140,7 +140,7 @@ else
 fi
 
 log "Removing the uploaded package from the TV..."
-ssh "$TARGET" "rm -f '$REMOTE_IPK'"
+ssh -n "$TARGET" "rm -f '$REMOTE_IPK'"
 UPLOADED=false
 
 echo
