@@ -38,6 +38,20 @@ The button behavior is:
 - Back in webOS 25 Menu: ignored
 - Long Back in another app: close it, then open webOS 25 Menu
 
+The app row mirrors the visible launch points and ordering from stock LG Home.
+Long-press Home and manage the row in LG Home; the custom menu reads those
+changes the next time it opens. In the weather city field, press Enter to
+start editing; merely highlighting the field does not open the keyboard.
+Press Enter again to close the keyboard and move focus to **Save weather**.
+
+Hourly Wikimedia Commons wallpapers are enabled by default. They use 1920px
+landscape thumbnails, rotate once per hour with a crossfade, and refresh
+their cached URL and attribution metadata daily. Attribution and a source
+button are available in Settings. Select **Hourly Wikimedia wallpapers** to
+disable network wallpaper loading and use the built-in neutral background.
+If Commons is offline, a cached playlist is used when available; otherwise
+the neutral background remains visible.
+
 ## Disable or uninstall
 
 Open the settings panel and choose **Disable** before uninstalling the IPK.

@@ -8,6 +8,9 @@
 </head>
 <body>
   <main class="home">
+    <div id="wallpaperLayerA" class="wallpaper-layer"></div>
+    <div id="wallpaperLayerB" class="wallpaper-layer"></div>
+
     <section id="status" class="status" aria-label="Time and weather">
       <time id="clock">--:--</time>
       <span id="weatherDivider" class="divider" hidden></span>
@@ -24,6 +27,8 @@
     <button id="settingsButton" class="settings-button" type="button" aria-label="Settings">
       <span aria-hidden="true">&#9881;</span>
     </button>
+
+    <p id="wallpaperAttribution" class="wallpaper-attribution" hidden></p>
 
     <section id="settingsPanel" class="settings-panel" aria-label="webOS 25 Menu settings" hidden>
       <div class="settings-card">
@@ -50,9 +55,20 @@
         </div>
 
         <div class="setting-group">
+          <h2>Wallpaper</h2>
+          <button id="wallpaperToggle" class="secondary focusable" type="button" aria-pressed="true">
+            Hourly Wikimedia wallpapers: On
+          </button>
+          <p id="wallpaperDetails" class="wallpaper-details">Loading Wikimedia Commons attribution…</p>
+          <button id="openWallpaperSource" class="secondary focusable" type="button" hidden>
+            Open Wikimedia source
+          </button>
+        </div>
+
+        <div class="setting-group">
           <h2>Weather</h2>
           <label for="weatherCity">Fallback city</label>
-          <input id="weatherCity" class="focusable" type="text" autocomplete="off" placeholder="Use the TV location">
+          <input id="weatherCity" class="focusable" type="text" autocomplete="off" placeholder="Use the TV location" readonly>
           <div class="actions">
             <button id="saveWeather" class="primary focusable" type="button">Save weather</button>
             <button id="clearWeather" class="secondary focusable" type="button">Use TV location</button>
@@ -64,6 +80,7 @@
     </section>
   </main>
 
+  <script src="wallpaper.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

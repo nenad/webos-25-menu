@@ -217,85 +217,97 @@ uninstall_mapper() {
 }
 
 list_apps() {
-  "$PYTHON3" - "$ROOT_PREFIX" "$APP_ID" <<'PY'
+  if [ "$TEST_MODE" = "1" ]; then
+    "$PYTHON3" - "$ROOT_PREFIX" "$APP_ID" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+prefix = Path(sys.argv[1])
+current_app_id = sys.argv[2]
+apps = []
+for relative_root in (
+    "usr/palm/applications",
+    "media/cryptofs/apps/usr/palm/applications",
+    "media/developer/apps/usr/palm/applications",
+):
+    root = prefix / relative_root
+    if not root.is_dir():
+        continue
+    for appinfo_path in root.glob("*/appinfo.json"):
+        info = json.loads(appinfo_path.read_text(encoding="utf-8"))
+        if (
+            info.get("id")
+            and info["id"] != current_app_id
+            and info.get("visible") is not False
+            and info.get("hidden") is not True
+        ):
+            apps.append({
+                "id": info["id"],
+                "title": info.get("title") or info["id"],
+                "icon": "",
+                "iconColor": info.get("iconColor") or "#243247",
+                "params": {},
+            })
+apps.sort(key=lambda app: (app["title"].casefold(), app["id"]))
+print(json.dumps({"ok": True, "launchPoints": apps}, separators=(",", ":")))
+PY
+    return
+  fi
+
+  launch_points_file="/tmp/webos25menu-launchpoints-$$.json"
+  /usr/bin/script -q -e -c \
+    "/usr/bin/luna-send -a com.webos.app.home -n 1 luna://com.webos.service.homelaunchpoints/listLaunchPoints '{}'" \
+    "$launch_points_file" >/dev/null
+
+  "$PYTHON3" - "$launch_points_file" "$APP_ID" <<'PY'
 import base64
 import json
 import mimetypes
 import sys
 from pathlib import Path
 
-prefix = Path(sys.argv[1]) if sys.argv[1] else Path("/")
+raw = Path(sys.argv[1]).read_text(encoding="utf-8")
+json_start = raw.find('{"subscribed"')
+if json_start < 0:
+    raise ValueError("Stock Home launch-point response was not found")
+response, _ = json.JSONDecoder().raw_decode(raw[json_start:])
 current_app_id = sys.argv[2]
-relative_roots = [
-    "usr/palm/applications",
-    "media/cryptofs/apps/usr/palm/applications",
-    "media/developer/apps/usr/palm/applications",
-]
-apps = {}
+result = []
 
-for relative_root in relative_roots:
-    root = prefix / relative_root
-    if not root.is_dir():
+for info in response.get("launchPoints", []):
+    app_id = info.get("id")
+    if not app_id or app_id == current_app_id or info.get("hidden") is True:
         continue
-    for app_dir in root.iterdir():
-        appinfo_path = app_dir / "appinfo.json"
-        if not appinfo_path.is_file():
-            continue
+
+    icon = (
+        info.get("extraLargeIcon")
+        or info.get("mediumLargeIcon")
+        or info.get("largeIcon")
+        or info.get("icon")
+        or ""
+    )
+    icon_path = Path(icon[7:] if icon.startswith("file:") else icon)
+    if icon.startswith("/") or icon.startswith("file:"):
         try:
-            info = json.loads(appinfo_path.read_text(encoding="utf-8"))
-        except (OSError, ValueError):
-            continue
-        app_id = info.get("id")
-        if (
-            not app_id
-            or app_id == current_app_id
-            or info.get("visible") is False
-            or info.get("hidden") is True
-            or info.get("noDisplay") is True
-        ):
-            continue
+            if icon_path.is_file() and icon_path.stat().st_size <= 262144:
+                mime = mimetypes.guess_type(icon_path.name)[0] or "image/png"
+                encoded = base64.b64encode(icon_path.read_bytes()).decode("ascii")
+                icon = f"data:{mime};base64,{encoded}"
+        except OSError:
+            pass
 
-        icon = (
-            info.get("extraLargeIcon")
-            or info.get("mediumLargeIcon")
-            or info.get("largeIcon")
-            or info.get("icon")
-            or ""
-        )
-        if icon and not (
-            icon.startswith("/")
-            or icon.startswith("file:")
-            or icon.startswith("http:")
-            or icon.startswith("https:")
-            or icon.startswith("data:")
-        ):
-            icon = str(app_dir / icon)
+    result.append({
+        "id": app_id,
+        "title": info.get("title") or info.get("appDescription") or app_id,
+        "icon": icon,
+        "iconColor": info.get("iconColor") or info.get("bgColor") or "#243247",
+        "params": info.get("params") or {},
+    })
 
-        icon_path = None
-        if icon.startswith("file:"):
-            icon_path = Path(icon[7:])
-        elif icon.startswith("/"):
-            icon_path = Path(icon)
-        if icon_path and icon_path.is_file():
-            try:
-                if icon_path.stat().st_size <= 262144:
-                    mime = mimetypes.guess_type(icon_path.name)[0] or "image/png"
-                    encoded = base64.b64encode(icon_path.read_bytes()).decode("ascii")
-                    icon = f"data:{mime};base64,{encoded}"
-            except OSError:
-                pass
-
-        apps[app_id] = {
-            "id": app_id,
-            "title": info.get("title") or info.get("appDescription") or app_id,
-            "icon": icon,
-            "iconColor": info.get("iconColor") or info.get("bgColor") or "#243247",
-            "params": {},
-        }
-
-result = sorted(apps.values(), key=lambda app: (app["title"].casefold(), app["id"]))
 print(json.dumps({"ok": True, "launchPoints": result}, separators=(",", ":")))
 PY
+  rm -f "$launch_points_file"
 }
 
 case "$ACTION" in

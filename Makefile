@@ -4,6 +4,8 @@ PYTHON ?= python3
 
 check:
 	node --check app/app.js
+	node --check app/wallpaper.js
+	node --test tests/test_wallpaper.js
 	$(PYTHON) -m py_compile app/root/remote_mapper.py tools/build_ipk.py tools/generate_icon.py
 	sh -n app/root/install.sh
 	sh -n app/root/start_mapper.sh
