@@ -72,6 +72,7 @@ The remote is configured as follows:
 - Long Home: open the original LG Home
 - Back inside webOS 25 Menu: ignored
 - Long Back in another app: close it and return to webOS 25 Menu
+- Exiting an app normally: return to webOS 25 Menu instead of LG Home
 
 ### Open automatically after TV startup
 

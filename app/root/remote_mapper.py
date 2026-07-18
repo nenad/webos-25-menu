@@ -109,6 +109,49 @@ def schedule_launch(app_id: str, delay: float) -> None:
     timer.start()
 
 
+def should_return_to_custom_home(
+    previous_app: str,
+    current_app: str,
+    custom_home: str,
+    stock_home: str,
+    now: float,
+    stock_home_allowed_until: float,
+) -> bool:
+    return (
+        current_app == stock_home
+        and previous_app not in ("", custom_home, stock_home)
+        and now >= stock_home_allowed_until
+    )
+
+
+def monitor_foreground_apps(
+    custom_home: str,
+    stock_home: str,
+    state: dict[str, float],
+    poll_seconds: float,
+) -> None:
+    previous_app = foreground_app_id()
+    while True:
+        time.sleep(poll_seconds)
+        current_app = foreground_app_id()
+        if not current_app:
+            continue
+
+        now = time.monotonic()
+        if should_return_to_custom_home(
+            previous_app,
+            current_app,
+            custom_home,
+            stock_home,
+            now,
+            state["stock_home_allowed_until"],
+        ):
+            log(f"{previous_app} exited to stock Home; returning to custom Home")
+            launch_app(custom_home)
+            current_app = custom_home
+        previous_app = current_app
+
+
 def run_mapper(config: dict[str, Any]) -> None:
     custom_home = str(config["customHomeAppId"])
     stock_home = str(config["stockHomeAppId"])
@@ -116,6 +159,9 @@ def run_mapper(config: dict[str, Any]) -> None:
     back_code = int(config["backKeyCode"])
     long_press = float(config.get("longPressSeconds", 1.0))
     return_delay = float(config.get("returnHomeDelaySeconds", 0.8))
+    foreground_poll = float(config.get("foregroundPollSeconds", 0.75))
+    stock_home_grace = float(config.get("stockHomeGraceSeconds", 30.0))
+    state = {"stock_home_allowed_until": 0.0}
 
     source_path = wait_for_input_device(str(config["sourceDeviceName"]))
     output_path = wait_for_input_device(str(config["outputDeviceName"]))
@@ -125,6 +171,12 @@ def run_mapper(config: dict[str, Any]) -> None:
     source = open(source_path, "rb", buffering=0)
     output = os.open(output_path, os.O_WRONLY)
     fcntl.ioctl(source, EVIOCGRAB, 1)
+    monitor = threading.Thread(
+        target=monitor_foreground_apps,
+        args=(custom_home, stock_home, state, foreground_poll),
+        daemon=True,
+    )
+    monitor.start()
 
     home_pressed_at: float | None = None
     back_pressed_at: float | None = None
@@ -149,6 +201,9 @@ def run_mapper(config: dict[str, Any]) -> None:
                 elif value == 0:
                     held_for = now - home_pressed_at if home_pressed_at is not None else 0
                     target = stock_home if held_for >= long_press else custom_home
+                    state["stock_home_allowed_until"] = (
+                        now + stock_home_grace if target == stock_home else 0.0
+                    )
                     log(
                         f"{'Long' if target == stock_home else 'Short'} Home press "
                         f"({held_for:.2f}s)"

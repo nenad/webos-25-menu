@@ -6,5 +6,7 @@
   "homeKeyCode": 773,
   "backKeyCode": 412,
   "longPressSeconds": 1.0,
-  "returnHomeDelaySeconds": 0.8
+  "returnHomeDelaySeconds": 0.8,
+  "foregroundPollSeconds": 0.75,
+  "stockHomeGraceSeconds": 30.0
 }

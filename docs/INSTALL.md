@@ -44,6 +44,7 @@ The button behavior is:
 - Long Home: open stock LG Home
 - Back in webOS 25 Menu: ignored
 - Long Back in another app: close it, then open webOS 25 Menu
+- Exiting an app normally: return to webOS 25 Menu instead of stock LG Home
 
 The app row mirrors the visible launch points and ordering from stock LG Home.
 Long-press Home and manage the row in LG Home; the custom menu reads those

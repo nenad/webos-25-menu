@@ -1,6 +1,6 @@
 {
   "id": "io.github.nenad.webos25menu",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "vendor": "Nenad",
   "type": "web",
   "main": "index.html",
