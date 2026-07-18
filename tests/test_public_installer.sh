@@ -43,9 +43,13 @@ printf 'ssh %s\n' "$*" >> "$LOG"
 case "$*" in
   *appInstallService/dev/install*)
     printf '%s\n' '{"state":"installed"}'
+    exit 255
     ;;
-  *"'sh -s'"*)
+  *sh\ -s*)
     cat >/dev/null
+    ;;
+  *"TV connection established"*)
+    printf '%s\n' 'TV connection established.'
     ;;
 esac
 EOF
@@ -57,5 +61,6 @@ PATH="$TEMP_DIR/bin:$PATH" bash "$PROJECT_ROOT/install.sh" tv.local --autostart 
 grep -Fq 'scp -O' "$LOG"
 grep -Fq 'root@tv.local:/tmp/webos25menu.ipk' "$LOG"
 grep -Fq 'appInstallService/dev/install' "$LOG"
+grep -Fq 'SSH command closed with status 255' "$TEMP_DIR/output.log"
 grep -Fq 'Installation complete.' "$TEMP_DIR/output.log"
 grep -Fq 'future TV startups' "$TEMP_DIR/output.log"

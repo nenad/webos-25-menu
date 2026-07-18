@@ -6,6 +6,10 @@ REPOSITORY=nenad/webos-25-menu
 APP_ID=io.github.nenad.webos25menu
 REMOTE_IPK=/tmp/webos25menu.ipk
 
+log() {
+  printf '[webos25menu] %s\n' "$*"
+}
+
 usage() {
   cat <<'EOF'
 Usage: install.sh <TV_IP_OR_HOSTNAME> [--autostart]
@@ -61,14 +65,24 @@ LOCAL_IPK="$TEMP_DIR/webos25menu.ipk"
 UPLOADED=false
 
 cleanup() {
+  status=$?
+  trap - EXIT
   rm -rf "$TEMP_DIR"
   if [[ "$UPLOADED" == true ]]; then
+    log "Removing temporary package from the TV..."
     ssh "$TARGET" "rm -f '$REMOTE_IPK'" >/dev/null 2>&1 || true
   fi
+  if [[ "$status" -ne 0 ]]; then
+    log "Installation stopped with exit code $status." >&2
+  fi
+  exit "$status"
 }
 trap cleanup EXIT
 
-echo "Finding the latest release..."
+log "Checking SSH access to $TARGET..."
+ssh "$TARGET" 'printf "TV connection established.\\n"'
+
+log "Finding the latest GitHub release..."
 RELEASE_URL=$(curl -fsSL -o /dev/null -w '%{url_effective}' \
   "https://github.com/$REPOSITORY/releases/latest")
 if [[ "$RELEASE_URL" != */tag/v* ]]; then
@@ -78,27 +92,40 @@ fi
 VERSION=${RELEASE_URL##*/v}
 ASSET="${APP_ID}_${VERSION}_all.ipk"
 DOWNLOAD_URL="https://github.com/$REPOSITORY/releases/download/v${VERSION}/${ASSET}"
+log "Latest release: v$VERSION"
+log "Release asset: $DOWNLOAD_URL"
 
-echo "Downloading $ASSET..."
+log "Downloading $ASSET..."
 curl -fL "$DOWNLOAD_URL" -o "$LOCAL_IPK"
+log "Downloaded $(wc -c < "$LOCAL_IPK" | tr -d ' ') bytes."
 
-echo "Copying the package to $TV_IP..."
+log "Uploading the package to $REMOTE_IPK..."
 scp -O "$LOCAL_IPK" "$TARGET:$REMOTE_IPK"
 UPLOADED=true
+log "Upload complete."
 
-echo "Installing webOS 25 Menu $VERSION..."
-INSTALL_OUTPUT=$(
-  ssh -tt "$TARGET" \
-    "timeout 60 luna-send -w 60000 -i luna://com.webos.appInstallService/dev/install '{\"id\":\"com.ares.defaultName\",\"ipkUrl\":\"$REMOTE_IPK\",\"subscribe\":true}'"
-)
-printf '%s\n' "$INSTALL_OUTPUT"
-if ! grep -Eq '"state"[[:space:]]*:[[:space:]]*"installed"' <<<"$INSTALL_OUTPUT"; then
+log "Starting webOS package installation (this can take up to a minute)..."
+INSTALL_LOG="$TEMP_DIR/install.log"
+set +e
+ssh -tt "$TARGET" \
+  "timeout 75 luna-send -w 60000 -i luna://com.webos.appInstallService/dev/install '{\"id\":\"com.ares.defaultName\",\"ipkUrl\":\"$REMOTE_IPK\",\"subscribe\":true}'" \
+  2>&1 | tr -d '\r' | tee "$INSTALL_LOG"
+PIPE_STATUSES=("${PIPESTATUS[@]}")
+set -e
+SSH_STATUS=${PIPE_STATUSES[0]}
+
+if ! grep -Eq '"state"[[:space:]]*:[[:space:]]*"installed"' "$INSTALL_LOG"; then
+  log "SSH exit code: $SSH_STATUS" >&2
   echo "The TV did not report a completed installation." >&2
   exit 1
 fi
+if [[ "$SSH_STATUS" -ne 0 ]]; then
+  log "The SSH command closed with status $SSH_STATUS after the TV reported success; continuing."
+fi
+log "webOS reported that version $VERSION is installed."
 
 if [[ "$AUTOSTART" == true ]]; then
-  echo "Installing the optional startup hook..."
+  log "Installing the optional 15-second startup hook..."
   ssh "$TARGET" 'sh -s' <<'EOF'
 cat > /var/lib/webosbrew/init.d/webos25menu-autostart <<'SCRIPT'
 #!/bin/sh
@@ -106,12 +133,19 @@ nohup sh -c "sleep 15; /usr/bin/luna-send -n 1 -f luna://com.webos.applicationMa
   >/tmp/webos25menu-autostart.log 2>&1 </dev/null &
 SCRIPT
 chmod 0755 /var/lib/webosbrew/init.d/webos25menu-autostart
+printf 'Autostart hook installed.\\n'
 EOF
+else
+  log "Autostart was not requested."
 fi
 
+log "Removing the uploaded package from the TV..."
+ssh "$TARGET" "rm -f '$REMOTE_IPK'"
+UPLOADED=false
+
 echo
-echo "Installation complete."
-echo "Open webOS 25 Menu, select the gear, and enable Home button integration."
+log "Installation complete."
+log "Open webOS 25 Menu, select the gear, and enable Home button integration."
 if [[ "$AUTOSTART" == true ]]; then
-  echo "The menu will also open automatically after future TV startups."
+  log "The menu will also open automatically after future TV startups."
 fi

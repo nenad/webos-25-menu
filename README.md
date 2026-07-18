@@ -36,6 +36,23 @@ GitHub release and install it with webOS Dev Manager, or copy and run the
 following command on a macOS or Linux computer. Replace the IP address with
 your TV's address:
 
+> [!WARNING]
+> Piping a downloaded script into Bash executes that script immediately with
+> your user account. A changed or compromised script could modify files on
+> your computer or send commands to your TV. Read
+> [`install.sh`](install.sh) before running it. For additional safety,
+> download it first, inspect the saved file, and run it only after you
+> understand what it does:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/nenad/webos-25-menu/main/install.sh \
+  -o /tmp/webos25menu-install.sh
+less /tmp/webos25menu-install.sh
+bash /tmp/webos25menu-install.sh 192.168.1.100
+```
+
+The shorter, direct form is:
+
 ```sh
 curl -fsSL https://raw.githubusercontent.com/nenad/webos-25-menu/main/install.sh |
   bash -s -- 192.168.1.100
