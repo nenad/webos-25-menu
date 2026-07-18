@@ -85,9 +85,10 @@ curl -fsSL https://raw.githubusercontent.com/nenad/webos-25-menu/main/install.sh
   bash -s -- 192.168.1.100 --autostart
 ```
 
-The 15-second delay lets webOS finish starting. The script lives only in the
-Homebrew startup directory and does not modify a read-only system partition.
-To disable automatic opening:
+The startup hook tries immediately, then retries every two seconds until
+webOS is ready, for up to 20 seconds. It lives only in the Homebrew startup
+directory and does not modify a read-only system partition. To disable
+automatic opening:
 
 ```sh
 TV_IP=192.168.1.100

@@ -65,14 +65,16 @@ the neutral background remains visible.
 ## Open automatically after startup
 
 Home button integration starts the remote mapper at boot. To also open the
-menu automatically 15 seconds after webOS starts, run:
+menu automatically as soon as webOS is ready, run:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/nenad/webos-25-menu/main/install.sh |
   bash -s -- 192.168.1.100 --autostart
 ```
 
-This uses only the Homebrew startup directory. Remove the startup hook with:
+The hook tries immediately and retries every two seconds for up to 20
+seconds. This uses only the Homebrew startup directory. Remove the startup
+hook with:
 
 ```sh
 TV_IP=192.168.1.100

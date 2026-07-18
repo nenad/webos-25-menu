@@ -125,15 +125,30 @@ fi
 log "webOS reported that version $VERSION is installed."
 
 if [[ "$AUTOSTART" == true ]]; then
-  log "Installing the optional 15-second startup hook..."
+  log "Installing the optional startup hook..."
   ssh "$TARGET" 'sh -s' <<'EOF'
 cat > /var/lib/webosbrew/init.d/webos25menu-autostart <<'SCRIPT'
 #!/bin/sh
-nohup sh -c "sleep 15; /usr/bin/luna-send -n 1 -f luna://com.webos.applicationManager/launch '{\"id\":\"io.github.nenad.webos25menu\"}'" \
+nohup sh -c '
+attempt=1
+while [ "$attempt" -le 10 ]; do
+  output=$(/usr/bin/luna-send -n 1 -f -w 5000 \
+    luna://com.webos.applicationManager/launch \
+    "{\"id\":\"io.github.nenad.webos25menu\"}" 2>&1)
+  printf "%s\n" "$output"
+  if printf "%s\n" "$output" |
+    grep -q "\"returnValue\"[[:space:]]*:[[:space:]]*true"; then
+    exit 0
+  fi
+  attempt=$((attempt + 1))
+  sleep 2
+done
+exit 1
+' \
   >/tmp/webos25menu-autostart.log 2>&1 </dev/null &
 SCRIPT
 chmod 0755 /var/lib/webosbrew/init.d/webos25menu-autostart
-printf 'Autostart hook installed.\\n'
+printf 'Autostart hook installed.\n'
 EOF
 else
   log "Autostart was not requested."

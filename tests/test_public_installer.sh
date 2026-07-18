@@ -46,7 +46,7 @@ case "$*" in
     exit 255
     ;;
   *sh\ -s*)
-    cat >/dev/null
+    cat >> "$LOG"
     ;;
   *"TV connection established"*)
     case " $* " in
@@ -78,3 +78,9 @@ grep -Fq 'ssh -n -tt root@tv.local' "$LOG"
 grep -Fq 'SSH command closed with status 255' "$TEMP_DIR/output.log"
 grep -Fq 'Installation complete.' "$TEMP_DIR/output.log"
 grep -Fq 'future TV startups' "$TEMP_DIR/output.log"
+grep -Fq 'while [ "$attempt" -le 10 ]' "$LOG"
+grep -Fq 'sleep 2' "$LOG"
+if grep -Fq 'sleep 15' "$LOG"; then
+  echo "Autostart hook still contains the fixed 15-second delay" >&2
+  exit 1
+fi
